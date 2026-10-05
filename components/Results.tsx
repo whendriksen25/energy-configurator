@@ -9,6 +9,9 @@ import { detail as fetchDetail, Detail, RunResult } from "@/lib/runner";
 import ConnectionsChart, { ConnItem } from "./charts/ConnectionsChart";
 import CostChart from "./charts/CostChart";
 import ProfileChart from "./charts/ProfileChart";
+import CashflowChart from "./charts/CashflowChart";
+import InvestmentSplit from "./InvestmentSplit";
+import Packages from "./Packages";
 
 const n = (r: Row, k: string) => Number(r[k]);
 
@@ -104,6 +107,28 @@ export default function Results({ run, inputs, locale, t }: { run: RunResult; in
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="card p-4 sm:p-5 lg:col-span-2">
+          <h3 className="font-semibold">{t.res.packages}</h3>
+          <p className="mb-3 text-sm text-ink2">{t.res.packagesHint}</p>
+          <Packages rows={rows} feasible={packed.feasible_idx} sel={sel} onSelect={setSel} t={t} eur={eur} nf={nf}
+            hasEv={rows.some((x) => n(x, "n_ac_chargers") + n(x, "n_dc_chargers") > 0)} />
+        </div>
+
+        <div className="card p-4 sm:p-5">
+          <h3 className="mb-3 font-semibold">{t.res.split}</h3>
+          <InvestmentSplit row={r} t={t} eur={eur} />
+        </div>
+
+        <div className="card p-4 sm:p-5">
+          <h3 className="mb-3 font-semibold">{t.res.cashflow}</h3>
+          {det ? (
+            <CashflowChart cf={det.cf} eur={eur} labels={{ year: t.res.year, yearly: t.res.cfYear, cum: t.res.cfCum, title: t.res.cashflow }} />
+          ) : (
+            <div className="h-[270px] animate-pulse rounded-lg bg-raised" />
+          )}
+          <p className="mt-2 text-xs text-muted">{t.res.cfNote}</p>
+        </div>
+
         {connItems.length > 1 && (
           <div className="card p-4 sm:p-5 lg:col-span-2">
             <h3 className="font-semibold">{t.res.compare}</h3>
