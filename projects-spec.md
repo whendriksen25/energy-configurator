@@ -45,7 +45,7 @@ Dutch (default) and English; `/` redirects by cookie `lang`, then browser langua
   + battery, solar + battery), price level per part (low / base / high).
 - Parity on 30 new random designs: worst EUR 2; full office run worst EUR 28, same best design (EUR 119,306).
 
-## Phase 4b (approved 5 Oct; database change applied 5 Oct)
+## Phase 4b (done 5 Oct: live save verified)
 
 Full design: section 8.10 of `project_specs.md`. Draft migration: `supabase/migrations/20261005120000_energy_configurator.sql`
 (three new tables, one save function callable only by the service role, Demo seed incl. 5 products). Dry-run scripts:
