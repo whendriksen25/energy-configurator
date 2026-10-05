@@ -1,0 +1,30 @@
+create extension if not exists pgcrypto;
+create extension if not exists "uuid-ossp";
+create role anon; create role authenticated; create role service_role bypassrls;
+create schema auth;
+create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.uid', true), '')::uuid $$;
+create table public.tenants (id uuid primary key default uuid_generate_v4(), name text not null, slug text not null);
+create table public.users (id uuid primary key, tenant_id uuid not null, email text not null, role text not null default 'user');
+create function public.get_user_tenant_id() returns uuid language sql stable security definer as $$ select tenant_id from users where id = auth.uid() $$;
+create table public.kanban_boards (id uuid primary key default gen_random_uuid(), tenant_id uuid, name text);
+create table public.kanban_stages (id uuid primary key default gen_random_uuid(), board_id uuid, name text, position int);
+create table public.companies (id uuid primary key default uuid_generate_v4(), tenant_id uuid not null, name text not null, owner_id uuid, tags text[] default '{}', created_at timestamptz default now(), updated_at timestamptz default now());
+create unique index idx_companies_tenant_name on public.companies (tenant_id, name);
+create table public.contacts (id uuid primary key default uuid_generate_v4(), tenant_id uuid not null, first_name text not null, last_name text not null, email text, phone text, company_id uuid, stage text default 'lead', source text default 'manual', owner_id uuid, tags text[] default '{}', lead_source text, created_at timestamptz default now(), updated_at timestamptz default now());
+create unique index idx_contacts_tenant_email on public.contacts (tenant_id, email) where email is not null;
+create table public.deals (id uuid primary key default uuid_generate_v4(), tenant_id uuid not null, title text not null, value numeric default 0, company_id uuid, contact_id uuid, owner_id uuid, board_id uuid not null, stage_id uuid not null, custom_fields jsonb default '{}', segment text);
+create table public.quotes (id uuid primary key default gen_random_uuid(), tenant_id uuid not null, deal_id uuid, contact_id uuid, company_id uuid, quote_number text not null, title text not null, status text not null default 'draft', valid_until date, subtotal numeric not null default 0, tax_amount numeric not null default 0, total numeric not null default 0, notes text, created_by uuid, created_at timestamptz default now());
+create table public.quote_items (id uuid primary key default gen_random_uuid(), quote_id uuid not null, product_id uuid, description text not null, quantity numeric not null default 1, unit_price numeric not null default 0, tax_rate numeric default 21, total numeric not null default 0, sort_order int not null default 0);
+create table public.products (id uuid primary key default gen_random_uuid(), tenant_id uuid not null, name text not null, description text, sku text, unit_price numeric not null default 0, currency text not null default 'EUR', unit text default 'piece', tax_rate numeric default 21, active boolean not null default true, category text);
+do $$ declare t text; begin
+  foreach t in array array['tenants','users','kanban_boards','kanban_stages','companies','contacts','deals','quotes','quote_items','products'] loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('grant all on public.%I to anon, authenticated, service_role', t);
+    execute format('create policy p on public.%I for all using (%s)', t, case when t in ('tenants','kanban_stages','quote_items') then 'true' when t='users' then 'id = auth.uid()' else 'tenant_id = (select get_user_tenant_id())' end);
+  end loop; end $$;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+grant usage on schema public to anon, authenticated, service_role;
+insert into tenants values ('99cc77f3-e2dc-4406-8fbd-3676508aa006','Demo','demo'), ('11111111-1111-1111-1111-111111111111','Other','other');
+insert into users values ('37c09cab-427b-4d8d-8d94-59dbea73d21c','99cc77f3-e2dc-4406-8fbd-3676508aa006','whendriksen25@gmail.com','owner'),('22222222-2222-2222-2222-222222222222','11111111-1111-1111-1111-111111111111','other@x.nl','owner');
+insert into kanban_boards values ('12bc9e5c-89b6-4029-8702-1506ba6a277a','99cc77f3-e2dc-4406-8fbd-3676508aa006','Sales Pipeline');
+insert into kanban_stages values ('712d0e6f-12e2-4a68-89a3-796bf1e93079','12bc9e5c-89b6-4029-8702-1506ba6a277a','New Lead',0);
