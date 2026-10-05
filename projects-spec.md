@@ -37,3 +37,10 @@ Dutch (default) and English; `/` redirects by cookie `lang`, then browser langua
 - Speed: full optimisation under 10 s on a laptop, under 20 s on a phone.
 - Meter CSV (8,760 / 35,040 rows) works; bad files get a clear message.
 - Build passes, no console errors, light/dark, phone width without sideways scroll.
+
+## Change 5 (approved 5 Oct)
+
+- Solar yield by roof orientation (south 950, flat 880, east-west 850 kWh/kWp, editable) and inverter cap 0.87 kW/kWp.
+- Results: investment split per part, 15-year cash flow, packages compared (smart charging only, + solar,
+  + battery, solar + battery), price level per part (low / base / high).
+- Parity on 30 new random designs: worst EUR 2; full office run worst EUR 28, same best design (EUR 119,306).

@@ -40,3 +40,4 @@ Never commit keys. `.env.local` is git-ignored. The Supabase service-role key (p
 | Date | Change | Files |
 |------|--------|-------|
 | 2026-10-04 | Phase 4a: engine port, configurator page (nl/en), parity test | all |
+| 2026-10-05 | Change 5: solar yield by roof orientation + inverter cap; numpy's exact ziggurat tables; investment split, 15-year cash flow, packages compared, price level per part | `lib/engine/*`, `lib/i18n.ts`, `components/*` |

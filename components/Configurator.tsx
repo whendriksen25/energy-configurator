@@ -2,7 +2,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { Dict, Locale } from "@/lib/i18n";
 import { fmt } from "@/lib/i18n";
-import { CONNECTIONS, SCENARIOS, SITE_TYPES, SiteTypeId, Overrides } from "@/lib/engine/params";
+import { CONNECTIONS, SCENARIOS, SITE_TYPES, SiteTypeId, Overrides, pvYield } from "@/lib/engine/params";
 import { buildParams, Inputs } from "@/lib/engine/configurator";
 import { parseMeterCsv, MeterResult, MeterUnit } from "@/lib/csv";
 import { optimise, RunResult } from "@/lib/runner";
@@ -14,10 +14,13 @@ type Form = {
   ac_kw: "11" | "22"; pattern: string; connection: string;
   scenario: string; contract: "" | "dynamic" | "fixed"; wholesale: string; fixedPrice: string; publicPrice: string;
   pvPrice: string; battPrice: string; chargerPrice: string; discount: string; escalation: string; eia: "" | "on" | "off";
+  yieldKwh: string; lvlSolar: Level; lvlBattery: Level; lvlChargers: Level;
 };
+type Level = "low" | "base" | "high";
 
 const ADV_EMPTY = { scenario: "base", contract: "" as const, wholesale: "", fixedPrice: "", publicPrice: "", pvPrice: "", battPrice: "",
-  chargerPrice: "", discount: "", escalation: "", eia: "" as const };
+  chargerPrice: "", discount: "", escalation: "", eia: "" as const, yieldKwh: "",
+  lvlSolar: "base" as Level, lvlBattery: "base" as Level, lvlChargers: "base" as Level };
 
 function defaultsFor(st: SiteTypeId): Form {
   const t = SITE_TYPES[st];
@@ -53,6 +56,25 @@ export default function Configurator({ locale, t }: { locale: Locale; t: Dict })
 
   function overrides(): Overrides {
     const o: Overrides = {};
+    // price level per part, applied on top of the scenario's prices; exact prices below win
+    const d = defaults;
+    if (d) {
+      const k = (l: Level) => (l === "low" ? 0.8 : l === "high" ? 1.2 : 1);
+      if (f.lvlSolar !== "base") {
+        o["costs.pv_eur_kwp"] = d.costs.pv_eur_kwp * k(f.lvlSolar);
+        o["costs.pv_eur_kwp_small_adder"] = d.costs.pv_eur_kwp_small_adder * k(f.lvlSolar);
+      }
+      if (f.lvlBattery !== "base") {
+        const low = f.lvlBattery === "low"; // 2030 cost curve: EUR 190/kWh + 120/kW vs 320 + 180
+        o["costs.battery_eur_kwh"] = d.costs.battery_eur_kwh * (low ? 190 / 320 : 1.2);
+        o["costs.battery_eur_kw"] = d.costs.battery_eur_kw * (low ? 120 / 180 : 1.2);
+      }
+      if (f.lvlChargers !== "base") {
+        o["costs.charger_ac_22kw_eur"] = d.costs.charger_ac_22kw_eur * k(f.lvlChargers);
+        o["costs.charger_dc_60kw_eur"] = d.costs.charger_dc_60kw_eur * k(f.lvlChargers);
+        o["costs.charger_civil_eur_each"] = d.costs.charger_civil_eur_each * k(f.lvlChargers);
+      }
+    }
     const put = (k: string, s: string, scale = 1) => { const v = num(s); if (s.trim() !== "" && Number.isFinite(v)) o[k] = v * scale; };
     if (f.contract) o["prices.contract_type"] = f.contract;
     put("prices.wholesale_base_eur_mwh", f.wholesale);
@@ -63,26 +85,28 @@ export default function Configurator({ locale, t }: { locale: Locale; t: Dict })
     put("costs.charger_ac_22kw_eur", f.chargerPrice);
     put("finance.discount_rate_pct", f.discount);
     put("prices.grid_tariff_escalation_pct", f.escalation);
+    put("site.specific_yield_kwh_kwp", f.yieldKwh);
     if (f.eia) o["finance.eia_enabled"] = f.eia === "on";
     return o;
   }
 
-  function inputs(): Inputs {
+  function baseInputs(): Inputs {
     return {
       site_type: f.site_type, annual_mwh: meter?.ok ? meter.annualMwh : num(f.annual_mwh), roof_m2: num(f.roof_m2),
       orientation: f.orientation, ev_annual_kwh: Math.max(0, evKwh || 0), ac_kw: Number(f.ac_kw),
       pattern: f.pattern === "auto" ? null : f.pattern, connection: f.connection, scenario: f.scenario,
-      overrides: overrides(), load_kw: meter?.ok ? meter.load : null,
+      overrides: {}, load_kw: meter?.ok ? meter.load : null,
     };
   }
+  const inputs = (): Inputs => ({ ...baseInputs(), overrides: overrides() });
 
-  // model defaults for the current site type and scenario, shown as placeholders
+  // model defaults for the current site type, roof and scenario: shown as placeholders, base for price levels
   const defaults = useMemo(() => {
     try {
-      return buildParams({ ...inputs(), overrides: {} });
+      return buildParams(baseInputs());
     } catch { return null; }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [f.site_type, f.annual_mwh, f.scenario]);
+  }, [f.site_type, f.annual_mwh, f.scenario, f.orientation]);
 
   async function run() {
     setError(null);
@@ -291,6 +315,7 @@ export default function Configurator({ locale, t }: { locale: Locale; t: Dict })
                 <Num label={t.advanced.charger} v={f.chargerPrice} ph={ph(defaults?.costs.charger_ac_22kw_eur, 0)} on={(v) => set("chargerPrice", v)} />
                 <Num label={t.advanced.discount} v={f.discount} ph={ph(defaults?.finance.discount_rate_pct, 1)} on={(v) => set("discount", v)} />
                 <Num label={t.advanced.escalation} v={f.escalation} ph={ph(defaults?.prices.grid_tariff_escalation_pct, 1)} on={(v) => set("escalation", v)} />
+                <Num label={t.advanced.yield} v={f.yieldKwh} ph={defaults ? ph(pvYield(defaults.site), 0) : ""} on={(v) => set("yieldKwh", v)} />
                 {!defaults?.site.household && (
                   <label className="flex items-center gap-2 self-end pb-2 text-sm">
                     <input type="checkbox" checked={f.eia ? f.eia === "on" : defaults?.finance.eia_enabled ?? true}
@@ -298,6 +323,21 @@ export default function Configurator({ locale, t }: { locale: Locale; t: Dict })
                     {t.advanced.eia}
                   </label>
                 )}
+              </div>
+              <span className="field-label mt-5">{t.advanced.levels}</span>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {([["solar", "lvlSolar"], ["battery", "lvlBattery"], ["chargers", "lvlChargers"]] as const).map(([part, key]) => (
+                  <div key={part}>
+                    <span className="mb-1 block text-xs text-ink2">{t.advanced.levelParts[part]}</span>
+                    <div className="seg" role="group" aria-label={`${t.advanced.levels}: ${t.advanced.levelParts[part]}`}>
+                      {(["low", "base", "high"] as const).map((l) => (
+                        <button key={l} type="button" aria-pressed={f[key] === l} onClick={() => set(key, l)}>
+                          {l === "low" ? (part === "battery" ? t.advanced.lowBattery : t.advanced.low) : l === "high" ? t.advanced.high : t.advanced.base}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
               <button type="button" className="btn btn-ghost mt-4 text-sm" onClick={() => setF((x) => ({ ...x, ...ADV_EMPTY }))}>{t.advanced.reset}</button>
             </div>
