@@ -2,7 +2,7 @@
 // Mirrors src/configurator_ref.py.
 import {
   Params, Overrides, SiteTypeId, SITE_TYPES, CONNECTIONS, PATTERN,
-  defaultParams, applyOverrides, applyScenario, sizeOverrides, smallestConnection,
+  defaultParams, applyOverrides, applyScenario, sizeOverrides, smallestConnection, pvYield,
 } from "./params";
 import { HOURS, buildingLoad, pvProfile, evDemand, priceCurve, evAvailability, sum, max } from "./profiles";
 import { evaluate, Ctx, Design, Row, Series } from "./model";
@@ -128,7 +128,7 @@ export function prepare(inp: Inputs): Prepared {
 export function seriesFor(prep: Prepared, nAc: number, nDc: number): Series {
   const { p, pattern, load } = prep;
   const s = p.site;
-  const pv1 = pvProfile(s.specific_yield_kwh_kwp, s.pv_orientation_mix, s.latitude);
+  const pv1 = pvProfile(pvYield(s), s.pv_orientation_mix, s.latitude, s.pv_inverter_kw_per_kwp);
   const e = evDemand(nAc, nDc, s.ev_annual_kwh, s.ac_socket_kw, s.dc_socket_kw, pattern);
   const price = priceCurve(p.prices.wholesale_base_eur_mwh, p.prices.price_volatility_factor);
   const avail = evAvailability(pattern);

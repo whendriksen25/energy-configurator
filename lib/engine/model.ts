@@ -166,6 +166,7 @@ export function evaluate(ctx: Ctx, d: Design, detail = false): { row: Row; sim?:
     upgrade_avoided_kw: rn(upgradeKw, 1), upgrade_avoided_eur: r0(upgradeEur),
     capex_eur: r0(ec.capexTotal(pcx)), capex_pv_eur: r0(cx.pv_eur), capex_batt_eur: r0(cx.battery_eur),
     capex_charger_eur: r0(cx.charger_eur), capex_charger_incremental_eur: r0(chgInc), capex_ems_eur: r0(cx.ems_eur),
+    capex_soft_eur: r0(pcx.soft_eur), capex_charger_ref_eur: r0(ctx.chargerCapexRef ?? 0),
     eia_benefit_eur: r0(eia), opex_eur_yr: r0(opex),
     baseline_cost_eur_yr: r0(ec.totalCost(base)), project_cost_eur_yr: r0(ec.totalCost(proj)),
     annual_saving_eur: r0(ec.totalCost(base) - ec.totalCost(proj)),
