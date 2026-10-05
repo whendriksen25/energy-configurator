@@ -11,7 +11,8 @@ import CostChart from "./charts/CostChart";
 import ProfileChart from "./charts/ProfileChart";
 import CashflowChart from "./charts/CashflowChart";
 import InvestmentSplit from "./InvestmentSplit";
-import Packages from "./Packages";
+import Packages, { bestPerPackage } from "./Packages";
+import SaveForm from "./SaveForm";
 
 const n = (r: Row, k: string) => Number(r[k]);
 
@@ -207,6 +208,11 @@ export default function Results({ run, inputs, locale, t }: { run: RunResult; in
           </div>
         </div>
       </div>
+
+      <SaveForm inputs={inputs} design={run.designs[sel]} row={r} household={inputs.site_type === "house"} locale={locale} t={t}
+        designText={`${String(r.connection_label)} · ${short(r)} · ${eur(n(r, "capex_eur"))}`}
+        packages={Object.fromEntries(Object.entries(bestPerPackage(rows, packed.feasible_idx)).map(([k, i]) =>
+          [k, i >= 0 ? { npv_eur: n(rows[i], "npv_eur"), capex_eur: n(rows[i], "capex_eur") } : null]))} />
     </section>
   );
 }

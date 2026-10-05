@@ -9,7 +9,7 @@ const en = {
   hero: {
     title: "Solar, battery, EV charging and grid connection: what pays off for your building?",
     lead: "Enter your building and your electric vehicles. The calculator simulates every hour of a year for hundreds of combinations and shows the one with the best value over 15 years.",
-    privacy: "The calculation runs in your browser. Nothing you enter is sent or stored.",
+    privacy: "The calculation runs in your browser. Nothing you enter is sent or stored unless you choose to save your result.",
   },
   steps: { site: "1. Your building", fleet: "2. Your electric vehicles", grid: "3. Your grid connection", meter: "4. Meter data (optional)", advanced: "Prices and assumptions" },
   site: {
@@ -135,6 +135,23 @@ const en = {
     colPackage: "Package", colDesign: "Design",
     notAvailable: "no workable design",
   },
+  save: {
+    title: "Save my result and request a quote",
+    lead: "We save the design shown above, with your details, so an adviser can contact you with a quote. Your meter data is not stored.",
+    showing: "Design to save: {design}",
+    firstName: "First name", lastName: "Last name", email: "E-mail", phone: "Phone (optional)", company: "Company name",
+    consent: "I agree that my details and this calculation are stored to contact me about a quote.",
+    privacy: "We use your details only for this request and do not share them with third parties. You can ask us to delete them at any time.",
+    button: "Save and request a quote", sending: "Saving…",
+    success: "Saved. Thank you, we will contact you about a quote.",
+    errors: {
+      invalid: "Please check your name, e-mail address and the consent box.",
+      rate_limited: "Too many saves from your connection. Please try again later.",
+      mismatch: "The result could not be confirmed. Please recalculate and try again.",
+      not_configured: "Saving is not available yet.",
+      server: "Saving did not work. Please try again later.",
+    },
+  },
   disclaimer: "This is a planning model, not advice or a quotation. Results depend on assumptions about prices, tariffs and usage patterns. Check your own figures with an installer and your grid operator before you invest.",
   about: {
     title: "Method and sources",
@@ -167,7 +184,7 @@ const nl: typeof en = {
   hero: {
     title: "Zonnepanelen, batterij, laadpunten en netaansluiting: wat loont voor uw gebouw?",
     lead: "Vul uw gebouw en uw elektrische voertuigen in. De rekenhulp simuleert elk uur van een jaar voor honderden combinaties en toont de combinatie met de beste waarde over 15 jaar.",
-    privacy: "De berekening draait in uw browser. Wat u invult wordt niet verstuurd of opgeslagen.",
+    privacy: "De berekening draait in uw browser. Wat u invult wordt niet verstuurd of opgeslagen, tenzij u uw resultaat bewaart.",
   },
   steps: { site: "1. Uw gebouw", fleet: "2. Uw elektrische voertuigen", grid: "3. Uw netaansluiting", meter: "4. Meetgegevens (optioneel)", advanced: "Prijzen en aannames" },
   site: {
@@ -292,6 +309,23 @@ const nl: typeof en = {
     adds: "Zonnepanelen voegen {solar} aan waarde toe; een batterij bovenop zonnepanelen voegt {batt} toe.",
     colPackage: "Pakket", colDesign: "Ontwerp",
     notAvailable: "geen werkbaar ontwerp",
+  },
+  save: {
+    title: "Bewaar mijn resultaat en vraag een offerte aan",
+    lead: "We bewaren het ontwerp hierboven met uw gegevens, zodat een adviseur contact met u opneemt over een offerte. Uw meetgegevens worden niet opgeslagen.",
+    showing: "Te bewaren ontwerp: {design}",
+    firstName: "Voornaam", lastName: "Achternaam", email: "E-mailadres", phone: "Telefoon (optioneel)", company: "Bedrijfsnaam",
+    consent: "Ik ga ermee akkoord dat mijn gegevens en deze berekening worden opgeslagen om contact met mij op te nemen over een offerte.",
+    privacy: "We gebruiken uw gegevens alleen voor deze aanvraag en delen ze niet met derden. U kunt ons altijd vragen ze te verwijderen.",
+    button: "Bewaren en offerte aanvragen", sending: "Bezig met bewaren…",
+    success: "Bewaard. Dank u, we nemen contact met u op over een offerte.",
+    errors: {
+      invalid: "Controleer uw naam, e-mailadres en het vinkje voor toestemming.",
+      rate_limited: "Te vaak bewaard vanaf uw verbinding. Probeer het later opnieuw.",
+      mismatch: "Het resultaat kon niet worden bevestigd. Bereken opnieuw en probeer het nog eens.",
+      not_configured: "Bewaren is nog niet beschikbaar.",
+      server: "Bewaren is niet gelukt. Probeer het later opnieuw.",
+    },
   },
   disclaimer: "Dit is een planningsmodel, geen advies of offerte. De uitkomsten hangen af van aannames over prijzen, tarieven en verbruikspatronen. Laat uw eigen cijfers controleren door een installateur en uw netbeheerder voordat u investeert.",
   about: {
