@@ -44,3 +44,10 @@ Dutch (default) and English; `/` redirects by cookie `lang`, then browser langua
 - Results: investment split per part, 15-year cash flow, packages compared (smart charging only, + solar,
   + battery, solar + battery), price level per part (low / base / high).
 - Parity on 30 new random designs: worst EUR 2; full office run worst EUR 28, same best design (EUR 119,306).
+
+## Phase 4b (approved 5 Oct; database change applied 5 Oct)
+
+Full design: section 8.10 of `project_specs.md`. Draft migration: `supabase/migrations/20261005120000_energy_configurator.sql`
+(three new tables, one save function callable only by the service role, Demo seed incl. 5 products). Dry-run scripts:
+`supabase/dryrun_stub.sql`, `supabase/dryrun_test.sql` (local Postgres only). Save route `/api/save` re-checks the design
+on the server. Migration applied to the live database on 5 Oct after approval; security check unchanged.

@@ -29,11 +29,15 @@ Plain English. Each reply: What I just did / What you need to do / Why / Next st
   `rng.ts` reproduces numpy's PCG64 / ziggurat-normal / beta so weather, price and noise series match Python.
 - `lib/i18n.ts` - all text, Dutch and English. Never hard-code copy in components.
 - `middleware.ts` - sends `/` to `/nl` or `/en` (cookie, then browser language).
-- Phase 4b adds saving to the Bridge CRM database; until then nothing leaves the visitor's browser.
+- `app/api/save/route.ts` (phase 4b) - the only server code: checks the request, re-runs the chosen design, then calls
+  the database function `energy_save_configuration` (Bridge CRM) with the service-role key. `lib/save.ts` builds the quote lines.
+- `supabase/migrations/` - database changes, applied only after Wim approves them. Nothing leaves the visitor's browser
+  until they click "save".
 
 ## Secrets
 
-Never commit keys. `.env.local` is git-ignored. The Supabase service-role key (phase 4b) lives only in Vercel env vars.
+Never commit keys. `.env.local` is git-ignored. Vercel environment variables (Production):
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (Wim adds it himself), `ENERGY_TENANT_ID` (Demo tenant in 4b), `IP_HASH_SALT`.
 
 ## Change log
 
@@ -41,3 +45,4 @@ Never commit keys. `.env.local` is git-ignored. The Supabase service-role key (p
 |------|--------|-------|
 | 2026-10-04 | Phase 4a: engine port, configurator page (nl/en), parity test | all |
 | 2026-10-05 | Change 5: solar yield by roof orientation + inverter cap; numpy's exact ziggurat tables; investment split, 15-year cash flow, packages compared, price level per part | `lib/engine/*`, `lib/i18n.ts`, `components/*` |
+| 2026-10-05 | Phase 4b: tables + save function in Bridge CRM (migration `energy_configurator`), `/api/save`, save form | `app/api/save`, `lib/save.ts`, `components/SaveForm.tsx`, `supabase/*` |
