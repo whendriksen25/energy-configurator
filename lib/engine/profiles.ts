@@ -110,8 +110,8 @@ export function buildingLoad(archetype: string, annualMwh: number): Float64Array
 
 const MONTHLY_KT = [0.34, 0.39, 0.44, 0.51, 0.53, 0.52, 0.51, 0.51, 0.47, 0.40, 0.33, 0.30];
 
-/** kWh per kWp per hour; sums to specificYield. */
-export function pvProfile(specificYield = 950.0, orientation = "east_west", latitude = 52.1): Float64Array {
+/** kWh per kWp per hour; sums to specificYield before the inverter cap (kW per kWp), above which output is lost. */
+export function pvProfile(specificYield = 950.0, orientation = "east_west", latitude = 52.1, inverterCap = 0): Float64Array {
   const { pvDaily, pvHourly } = noise();
   const rad = Math.PI / 180;
   const lat = latitude * rad;
@@ -131,7 +131,10 @@ export function pvProfile(specificYield = 950.0, orientation = "east_west", lati
     out[t] = cz <= 0 ? 0.0 : raw * clear;
   }
   const tot = sum(out);
-  for (let t = 0; t < HOURS; t++) out[t] = (out[t] * specificYield) / tot;
+  for (let t = 0; t < HOURS; t++) {
+    out[t] = (out[t] * specificYield) / tot;
+    if (inverterCap > 0) out[t] = Math.min(out[t], inverterCap);
+  }
   return out;
 }
 

@@ -41,6 +41,12 @@ export const CONNECTIONS: Connection[] = [
 ];
 export const CONN: Record<string, Connection> = Object.fromEntries(CONNECTIONS.map((c) => [c.id, c]));
 
+/** Annual kWh per kWp: explicit override, else by roof orientation. */
+export function pvYield(site: Params["site"]): number {
+  if (site.specific_yield_kwh_kwp > 0) return site.specific_yield_kwh_kwp;
+  return site.pv_yield_by_orientation[site.pv_orientation_mix] ?? site.pv_yield_by_orientation.flat;
+}
+
 export function smallestConnection(kw: number, atLeast?: string): Connection {
   const floor = atLeast ? CONN[atLeast].kw : 0;
   for (const c of CONNECTIONS) if (c.kw >= kw - 1e-6 && c.kw >= floor) return c;
@@ -141,7 +147,9 @@ export function defaultParams() {
       latitude: 52.1,
       roof_area_m2: 2500.0,
       pv_m2_per_kwp: 5.0,
-      specific_yield_kwh_kwp: 950.0,
+      specific_yield_kwh_kwp: 0.0, // 0 = by roof orientation (below); > 0 overrides
+      pv_yield_by_orientation: { south: 950.0, east_west: 850.0, flat: 880.0 } as Record<string, number>,
+      pv_inverter_kw_per_kwp: 0.87, // DC/AC 1.15; output above it is lost
       pv_orientation_mix: "east_west",
       ev_annual_kwh: 90000.0,
       n_ev_ac: 8,
@@ -249,6 +257,8 @@ export const SOURCES = [
   { key: "pv_capex", text: "NL commercial rooftop pricing 2026: EUR 0.50-0.90/Wp installed" },
   { key: "public_charging", text: "Athlon kennisbank, Tarieven elektrisch opladen (May 2025): public AC EUR 0.25-0.55/kWh" },
   { key: "upgrade_cost", text: "ASSUMPTION - connection upgrade EUR 120/kW; not in Liander's tariff sheet" },
+  { key: "pv_yield", text: "ASSUMPTION - typical NL solar yield per kWp: south 950, flat/mixed 880, east-west 850 kWh per year" },
+  { key: "pv_inverter", text: "ASSUMPTION - inverter sized at DC/AC 1.15: at most 0.87 kW per kWp of panels" },
 ];
 
-export const MODEL_VERSION = "2026.10-4a";
+export const MODEL_VERSION = "2026.10-5";
