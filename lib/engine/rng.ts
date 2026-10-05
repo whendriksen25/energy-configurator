@@ -6,6 +6,7 @@ const M128 = (1n << 128n) - 1n;
 const M64 = (1n << 64n) - 1n;
 const MULT = (2549297995355413924n << 64n) | 4865540595714422341n;
 const TWO53 = 9007199254740992;
+import { KI, WI, FI } from "./zigtables";
 
 // PCG64 state right after numpy seeds it (SeedSequence), for the seeds the model uses.
 const SEEDED: Record<number, [bigint, bigint]> = {
@@ -15,32 +16,9 @@ const SEEDED: Record<number, [bigint, bigint]> = {
   63: [0x9e465455af3515de79e88da76442c3e4n, 0xbafd2e9dbd5eb50d3417021107c672a1n],
 };
 
-// Ziggurat tables (256 layers), rebuilt the way numpy's were generated.
+// Ziggurat tables: numpy's own constants (see zigtables.ts).
 const ZIG_R = 3.6541528853610087963519472518;
 const ZIG_INV_R = 0.27366123732975827203338247596;
-const KI = new Float64Array(256);
-const WI = new Float64Array(256);
-const FI = new Float64Array(256);
-(function buildTables() {
-  const v = 0.004928673233974652; // layer area implied by numpy's table
-  const m1 = 2 ** 52;
-  let dn = ZIG_R;
-  let tn = dn;
-  const q = v / Math.exp(-0.5 * dn * dn);
-  KI[0] = Math.floor((dn / q) * m1);
-  KI[1] = 0;
-  WI[0] = q / m1;
-  WI[255] = dn / m1;
-  FI[0] = 1.0;
-  FI[255] = Math.exp(-0.5 * dn * dn);
-  for (let i = 254; i >= 1; i--) {
-    dn = Math.sqrt(-2 * Math.log(v / dn + Math.exp(-0.5 * dn * dn)));
-    KI[i + 1] = Math.floor((dn / tn) * m1);
-    tn = dn;
-    FI[i] = Math.exp(-0.5 * dn * dn);
-    WI[i] = dn / m1;
-  }
-})();
 
 export class Rng {
   private state: bigint;
